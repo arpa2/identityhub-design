@@ -47,6 +47,7 @@ deactivate Control
 
 	activate LDAP
 	KeyManager -> LDAP: Retrieve role@domain
+	note left: When copying the LDAP entry
 
 	LDAP -> KeyManager: Creds MIIEVzCCAz...
 	LDAP -> KeyManager: pkcs11:xxx;y;zz
@@ -60,6 +61,7 @@ deactivate Control
 	KeyManager -> LDAP: Have role@domain Occupant user@domain1 AS role+you@domain
 	KeyManager -> LDAP: Have Creds for user@domain1 AS role+you@domain
 	KeyManager -> LDAP: Have pkcs11:xxx;y;zz XS user@domain1 AS role+you@domain
+	note left: Or share the LDAP entry
 
 	LDAP -> KeyManager: Ready
 	deactivate LDAP
