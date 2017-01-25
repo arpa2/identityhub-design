@@ -16,6 +16,8 @@ activate User
 activate Control
 User -> Control: Alias Add user+ali@domain
 
+== Access Control ==
+
 	activate Authn
 	Control -> Authn: SecureLayer @domain
 	Authn -> Control: RemoteID user@domain
@@ -26,6 +28,8 @@ User -> Control: Alias Add user+ali@domain
 	Authz -> Control: OK FOR user1@domain
 	deactivate Authz
 
+== Sanity Check ==
+
 	activate LDAP
 	Control -> LDAP: Compare user+ali@domain AS user1@domain
 	LDAP -[#blue]-> Control: UserID Found
@@ -35,6 +39,8 @@ Control -[#blue]-> User: Already Exists
 	deactivate LDAP
 Control -> User: Queued
 deactivate User
+
+== Key Management ==
 
 	activate KeyManager
 	Control -> KeyManager: Have User user+ali@domain

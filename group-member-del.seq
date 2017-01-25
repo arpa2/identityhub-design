@@ -16,6 +16,8 @@ activate User
 activate Control
 User -> Control: Group group@domain Member Del user@domain1
 
+== Access Control ==
+
 	activate Authn
 	Control -> Authn: SecureLayer @domain
 	Authn -> Control: RemoteID group+you@domain
@@ -25,6 +27,8 @@ User -> Control: Group group@domain Member Del user@domain1
 	Control -> Authz: WANT group-membership ON group@domain AS group+you@domain
 	Authz -> Control: OK FOR group+you@domain
 	deactivate Authz
+
+== Sanity Check ==
 
 	activate LDAP
 	Control -> LDAP: Compare group@domain Member user@domain1 AS group+you@domain
@@ -36,6 +40,8 @@ Control -[#blue]-> User: Unknown Member
 
 Control -> User: Queued
 deactivate User
+
+== Key Management ==
 
 	activate KeyManager
 	Control -> KeyManager: Drop group@domain Member user@domain1

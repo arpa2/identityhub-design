@@ -16,6 +16,8 @@ activate User
 activate Control
 User -> Control: Role role@domain Grant user@domain1
 
+== Access Control ==
+
 	activate Authn
 	Control -> Authn: SecureLayer @domain
 	Authn -> Control: RemoteID role+you@domain
@@ -25,6 +27,8 @@ User -> Control: Role role@domain Grant user@domain1
 	Control -> Authz: WANT role-occupancy ON role@domain AS role+you@domain
 	Authz -> Control: OK FOR role+you@domain
 	deactivate Authz
+
+== Sanity Check ==
 
 	activate LDAP
 	Control -> LDAP: Compare role@domain Occupant user@domain1 AS role+you@domain
@@ -36,6 +40,8 @@ Control -[#blue]-> User: Already Occupant
 
 Control -> User: Queued
 deactivate User
+
+== Key Management ==
 
 	activate KeyManager
 	Control -> KeyManager: Have role@domain Occupant user@domain1

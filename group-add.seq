@@ -16,6 +16,8 @@ activate User
 activate Control
 User -> Control: Group Add group@domain
 
+== Access Control ==
+
 	activate Authn
 	Control -> Authn: SecureLayer @domain
 	Authn -> Control: RemoteID you@domain
@@ -25,6 +27,8 @@ User -> Control: Group Add group@domain
 	Control -> Authz: WANT groupid-create ON @domain AS you@domain
 	Authz -> Control: OK FOR admin@domain
 	deactivate Authz
+
+== Sanity Check ==
 
 	activate LDAP
 	Control -> LDAP: Compare group@domain AS admin@domain
@@ -36,6 +40,8 @@ Control -[#blue]-> User: Already Exists
 
 Control -> User: Queued
 deactivate User
+
+== Key Management ==
 
 	activate KeyManager
 	Control -> KeyManager: Have Group group@domain

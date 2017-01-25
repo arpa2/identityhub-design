@@ -16,6 +16,8 @@ activate User
 activate Control
 User -> Control: Pseudonym Add psew@domain
 
+== Access Control ==
+
 	activate Authn
 	Control -> Authn: SecureLayer @domain
 	Authn -> Control: RemoteID user@domain
@@ -25,6 +27,8 @@ User -> Control: Pseudonym Add psew@domain
 	Control -> Authz: WANT pseudonym-create ON user@domain AS user@domain
 	Authz -> Control: OK FOR user1@domain
 	deactivate Authz
+
+== Sanity Check ==
 
 	activate LDAP
 	Control -> LDAP: Compare psew@domain AS user1@domain
@@ -36,6 +40,8 @@ Control -[#blue]-> User: Already Exists
 
 Control -> User: Queued
 deactivate User
+
+== Key Management ==
 
 	activate KeyManager
 	Control -> KeyManager: Have User psew@domain
