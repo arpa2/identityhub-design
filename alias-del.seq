@@ -12,7 +12,7 @@ database LDAP
 
 autonumber
 
-User -> Control: Alias Add user+ali@domain
+User -> Control: Alias Del user+ali@domain
 activate User
 activate Control
 
@@ -23,7 +23,7 @@ activate Control
 	Authn -> Control: RemoteID user@domain
 	deactivate Authn
 
-	Control -> Authz: WANT alias-create ON user@domain AS user@domain 
+	Control -> Authz: WANT alias-delete ON user@domain AS user@domain 
 	activate Authz
 	Authz -> Control: OK FOR user1@domain
 	deactivate Authz
@@ -32,17 +32,17 @@ activate Control
 
 	Control -> LDAP: Compare user+ali@domain AS user1@domain
 	activate LDAP
-	LDAP -[#blue]-> Control: UserID Found
+	LDAP -[#blue]-> Control: UserID Not Found
 note left: <color:blue>Alternative flow, fatal error</color>
-Control -[#blue]-> User: Already Exists
-	LDAP -> Control: UserID Not Found
+Control -[#blue]-> User: Not Found
+	LDAP -> Control: UserID Found
 	deactivate LDAP
 Control -> User: Queued
 deactivate User
 
 == Key Management ==
 
-	Control -> KeyManager: Have User user+ali@domain
+	Control -> KeyManager: Drop User user+ali@domain
 	activate KeyManager
 	KeyManager -> Control: Queued
 deactivate Control
@@ -50,20 +50,12 @@ deactivate Control
 
 		' No key material will be handled
 
-	KeyManager -> LDAP: Retrieve user@domain
-	activate LDAP
-	note left: When copying the LDAP entry
-
-	LDAP -> KeyManager: Creds MIIEVzCCAz...
-	LDAP -> KeyManager: pkcs11:xxx;y;zz
-	' deactivate LDAP
-
-	KeyManager -> LDAP: Have user+ali@domain XS public AS user1@domain
+	KeyManager -> LDAP: Drop Creds for user+ali@domain AS user1@domain
+	KeyManager -> LDAP: Drop pkcs11:xxx;y;zz AS user1@domain
+	note left: Unless sharing the LDAP entry
+	KeyManager -> LDAP: Drop user+ali@domain AS user1@domain
+	KeyManager -> LDAP: Drop user+ali@domain Alias user@domain AS user1@domain
 	' activate LDAP
-	KeyManager -> LDAP: Have user+ali@domain Alias user@domain AS user1@domain
-	KeyManager -> LDAP: Have Creds for user+ali@domain AS user1@domain
-	KeyManager -> LDAP: Have pkcs11:xxx;y;zz XS user@domain AS user1@domain
-	note left: Or share the LDAP entry
 
 	LDAP -> KeyManager: Ready
 	deactivate LDAP

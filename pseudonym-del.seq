@@ -12,7 +12,7 @@ database DNS
 
 autonumber
 
-User -> Control: Pseudonym Add psew@domain
+User -> Control: Pseudonym Del psew@domain
 activate User
 activate Control
 
@@ -20,10 +20,10 @@ activate Control
 
 	Control -> Authn: SecureLayer @domain
 	activate Authn
-	Authn -> Control: RemoteID user@domain
+	Authn -> Control: RemoteID you@domain
 	deactivate Authn
 
-	Control -> Authz: WANT pseudonym-create ON user@domain AS user@domain
+	Control -> Authz: WANT pseudonym-delete ON psew@domain AS user@domain
 	activate Authz
 	Authz -> Control: OK FOR user1@domain
 	deactivate Authz
@@ -32,10 +32,10 @@ activate Control
 
 	Control -> LDAP: Compare psew@domain AS user1@domain
 	activate LDAP
-	LDAP -[#blue]-> Control: UserID Found
+	LDAP -[#blue]-> Control: UserID Not Found
 note left: <color:blue>Alternative flow, fatal error</color>
-Control -[#blue]-> User: Already Exists
-	LDAP -> Control: UserID Not Found
+Control -[#blue]-> User: Not Found
+	LDAP -> Control: UserID Found
 	deactivate LDAP
 
 Control -> User: Queued
@@ -43,41 +43,34 @@ deactivate User
 
 == Key Management ==
 
-	Control -> KeyManager: Have User psew@domain
+	Control -> KeyManager: Drop User user@domain
 	activate KeyManager
 	KeyManager -> Control: Queued
 deactivate Control
 	' Do not deactivate KeyManager
 
-			KeyManager -> KDC: Have Principal psew@domain
+			KeyManager -> KDC: Drop Principal psew@domain
+			KeyManager -> KDC: Drop Principals psew+...@domain
 			activate KDC
 
-		KeyManager -> PKCS11: Have Layer psew@domain AS user1@domain
+		KeyManager -> PKCS11: Drop Layer psew@domain AS user1@domain
 		activate PKCS11
 
 			KDC -> KeyManager: OK
 			deactivate KDC
 
-		KeyManager -> PKCS11: Have Keys psew@domain
-
-		PKCS11 -> KeyManager: Made pkcs11:xxx;y;zz
-
-		KeyManager -> PKCS11: Retrieve psew@domain
-		PKCS11 -> KeyManager: PubKey MIIEVzCCAz...
+		PKCS11 -> KeyManager: Ready
 
 		deactivate PKCS11
 
-	KeyManager -> KeyManager: PubKey MIIEVzCCAz... to Creds
-	activate KeyManager
-	deactivate KeyManager
-
-	KeyManager -> LDAP: Have psew@domain XS public AS user1@domain
+	KeyManager -> LDAP: Drop Creds for psew@domain AS user1@domain
 	activate LDAP
-	KeyManager -> LDAP: Pseudonym psew@domain For user@domain
-	KeyManager -> LDAP: Have Creds for psew@domain XS public AS user1@domain
-	KeyManager -> LDAP: Have pkcs11:xxx;y;zz XS psew@domain AS user1@domain
+	KeyManager -> LDAP: Drop Creds for psew+...@domain AS user1@domain
+	KeyManager -> LDAP: Drop pkcs11:xxx;y;zz AS user1@domain
+	KeyManager -> LDAP: Drop psew@domain AS user1@domain
+	KeyManager -> LDAP: Drop psew+...@domain AS user1@domain
 
-		KeyManager -[#blue]-> DNS: Have TLSA records AS user1@domain
+		KeyManager -[#blue]-> DNS: Drop TLSA records AS user1@domain
 		activate DNS
 		note left: <color:blue>TLSA only for hosts</color>
 		DNS -[#blue]-> KeyManager: Queued

@@ -4,11 +4,13 @@
 # We installed PlantUML in ~/Library
 # For options, just run $(UMLPROC) -h
 #
-UMLPROC = java -jar ~/Library/plantuml.jar
+UMLPROC = java -splash:/dev/null -jar ~/Library/plantuml.jar
 
 
 BASES += user-add pseudonym-add alias-add
-BASES += group-add
+BASES += user-del pseudonym-del alias-del
+BASES += group-add group-del
+BASES += role-add role-del
 BASES += group-member-add group-member-del
 BASES += role-occupant-add role-occupant-del
 
@@ -17,6 +19,7 @@ EXTS += svg
 EXTS += png
 #CRASHES# EXTS += txt
 
+SOURCES = $(foreach base,$(BASES),$(base).seq )
 TARGETS = $(foreach base,$(BASES),$(foreach ext,$(EXTS),$(base).$(ext) ))
 
 fast:
@@ -34,6 +37,9 @@ clean:
 	rm -f $(TARGETS)
 
 anew: clean all
+
+pre-commit: all
+	git add $(SOURCES) $(TARGETS)
 
 
 #

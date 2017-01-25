@@ -12,26 +12,26 @@ database LDAP
 
 autonumber
 
+User -> Control: Role role@domain Grant user@domain1
 activate User
 activate Control
-User -> Control: Role role@domain Grant user@domain1
 
 == Access Control ==
 
-	activate Authn
 	Control -> Authn: SecureLayer @domain
+	activate Authn
 	Authn -> Control: RemoteID role+you@domain
 	deactivate Authn
 
-	activate Authz
 	Control -> Authz: WANT role-occupancy ON role@domain AS role+you@domain
+	activate Authz
 	Authz -> Control: OK FOR role+you@domain
 	deactivate Authz
 
 == Sanity Check ==
 
-	activate LDAP
 	Control -> LDAP: Compare role@domain Occupant user@domain1 AS role+you@domain
+	activate LDAP
 	LDAP -[#blue]-> Control: UserID Found
 note left: <color:blue>Alternative flow, fatal error</color>
 Control -[#blue]-> User: Already Occupant
@@ -43,34 +43,38 @@ deactivate User
 
 == Key Management ==
 
-	activate KeyManager
 	Control -> KeyManager: Have role@domain Occupant user@domain1
+	activate KeyManager
 	KeyManager -> Control: Queued
 deactivate Control
 	' Do not deactivate KeyManager
 
 		' No key material will be handled
 
-	activate LDAP
 	KeyManager -> LDAP: Retrieve role@domain
+	activate LDAP
 	note left: When copying the LDAP entry
 
 	LDAP -> KeyManager: Creds MIIEVzCCAz...
 	LDAP -> KeyManager: pkcs11:xxx;y;zz
 	deactivate LDAP
 
-	activate KeyManager
 	KeyManager -> KeyManager: Pick a role-internal OccupantID
+	activate KeyManager
 	deactivate KeyManager
 
-	activate LDAP
 	KeyManager -> LDAP: Have role@domain Occupant user@domain1 AS role+you@domain
+	activate LDAP
 	KeyManager -> LDAP: Have Creds for user@domain1 AS role+you@domain
 	KeyManager -> LDAP: Have pkcs11:xxx;y;zz XS user@domain1 AS role+you@domain
 	note left: Or share the LDAP entry
 
 	LDAP -> KeyManager: Ready
 	deactivate LDAP
+
+	KeyManager -> Authz: Cache hints
+	activate Authz
+	deactivate Authz
 
 	' Now we deactivate KeyManager
 	deactivate KeyManager

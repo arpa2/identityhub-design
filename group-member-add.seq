@@ -12,26 +12,26 @@ database LDAP
 
 autonumber
 
+User -> Control: Group group@domain Member Add user@domain1
 activate User
 activate Control
-User -> Control: Group group@domain Member Add user@domain1
 
 == Access Control ==
 
-	activate Authn
 	Control -> Authn: SecureLayer @domain
+	activate Authn
 	Authn -> Control: RemoteID group+you@domain
 	deactivate Authn
 
-	activate Authz
 	Control -> Authz: WANT group-membership ON group@domain AS group+you@domain
+	activate Authz
 	Authz -> Control: OK FOR group+you@domain
 	deactivate Authz
 
 == Sanity Check ==
 
-	activate LDAP
 	Control -> LDAP: Compare group@domain Member user@domain1 AS group+you@domain
+	activate LDAP
 	LDAP -[#blue]-> Control: UserID Found
 note left: <color:blue>Alternative flow, fatal error</color>
 Control -[#blue]-> User: Already Member
@@ -43,34 +43,38 @@ deactivate User
 
 == Key Management ==
 
-	activate KeyManager
 	Control -> KeyManager: Have group@domain Member user@domain1
+	activate KeyManager
 	KeyManager -> Control: Queued
 deactivate Control
 	' Do not deactivate KeyManager
 
 		' No key material will be handled
 
-	activate LDAP
 	KeyManager -> LDAP: Retrieve group@domain
+	activate LDAP
 	note left: When copying the LDAP entry
 
 	LDAP -> KeyManager: Creds MIIEVzCCAz...
 	LDAP -> KeyManager: pkcs11:xxx;y;zz
 	deactivate LDAP
 
-	activate KeyManager
 	KeyManager -> KeyManager: Pick a group-internal MemberID
+	activate KeyManager
 	deactivate KeyManager
 
-	activate LDAP
 	KeyManager -> LDAP: Have group@domain Member user@domain1 AS group+you@domain
+	activate LDAP
 	KeyManager -> LDAP: Have Creds for user@domain1 AS group+you@domain
 	KeyManager -> LDAP: Have pkcs11:xxx;y;zz XS user@domain1 AS group+you@domain
 	note left: Or share the LDAP entry
 
 	LDAP -> KeyManager: Ready
 	deactivate LDAP
+
+	KeyManager -> Authz: Cache hints
+	activate Authz
+	deactivate Authz
 
 	' Now we deactivate KeyManager
 	deactivate KeyManager

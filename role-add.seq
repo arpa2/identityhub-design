@@ -12,7 +12,7 @@ database DNS
 
 autonumber
 
-User -> Control: Pseudonym Add psew@domain
+User -> Control: Role Add role@domain
 activate User
 activate Control
 
@@ -20,17 +20,17 @@ activate Control
 
 	Control -> Authn: SecureLayer @domain
 	activate Authn
-	Authn -> Control: RemoteID user@domain
+	Authn -> Control: RemoteID you@domain
 	deactivate Authn
 
-	Control -> Authz: WANT pseudonym-create ON user@domain AS user@domain
+	Control -> Authz: WANT roleid-create ON @domain AS you@domain
 	activate Authz
-	Authz -> Control: OK FOR user1@domain
+	Authz -> Control: OK FOR admin@domain
 	deactivate Authz
 
 == Sanity Check ==
 
-	Control -> LDAP: Compare psew@domain AS user1@domain
+	Control -> LDAP: Compare roleid@domain AS admin@domain
 	activate LDAP
 	LDAP -[#blue]-> Control: UserID Found
 note left: <color:blue>Alternative flow, fatal error</color>
@@ -43,26 +43,26 @@ deactivate User
 
 == Key Management ==
 
-	Control -> KeyManager: Have User psew@domain
+	Control -> KeyManager: Have Role role@domain
 	activate KeyManager
 	KeyManager -> Control: Queued
 deactivate Control
 	' Do not deactivate KeyManager
 
-			KeyManager -> KDC: Have Principal psew@domain
+			KeyManager -> KDC: Have Principal role@domain
 			activate KDC
 
-		KeyManager -> PKCS11: Have Layer psew@domain AS user1@domain
+		KeyManager -> PKCS11: Have Layer role@domain AS admin@domain
 		activate PKCS11
 
 			KDC -> KeyManager: OK
 			deactivate KDC
 
-		KeyManager -> PKCS11: Have Keys psew@domain
+		KeyManager -> PKCS11: Have Keys role@domain
 
 		PKCS11 -> KeyManager: Made pkcs11:xxx;y;zz
 
-		KeyManager -> PKCS11: Retrieve psew@domain
+		KeyManager -> PKCS11: Retrieve role@domain
 		PKCS11 -> KeyManager: PubKey MIIEVzCCAz...
 
 		deactivate PKCS11
@@ -71,13 +71,12 @@ deactivate Control
 	activate KeyManager
 	deactivate KeyManager
 
-	KeyManager -> LDAP: Have psew@domain XS public AS user1@domain
+	KeyManager -> LDAP: Have role@domain XS public AS admin@domain
 	activate LDAP
-	KeyManager -> LDAP: Pseudonym psew@domain For user@domain
-	KeyManager -> LDAP: Have Creds for psew@domain XS public AS user1@domain
-	KeyManager -> LDAP: Have pkcs11:xxx;y;zz XS psew@domain AS user1@domain
+	KeyManager -> LDAP: Have Creds for role@domain XS public AS admin@domain
+	KeyManager -> LDAP: Have pkcs11:xxx;y;zz XS role@domain AS admin@domain
 
-		KeyManager -[#blue]-> DNS: Have TLSA records AS user1@domain
+		KeyManager -[#blue]-> DNS: Have TLSA records AS admin@domain
 		activate DNS
 		note left: <color:blue>TLSA only for hosts</color>
 		DNS -[#blue]-> KeyManager: Queued

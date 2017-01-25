@@ -12,26 +12,26 @@ database DNS
 
 autonumber
 
+User -> Control: User Add user@domain
 activate User
 activate Control
-User -> Control: User Add user@domain
 
 == Access Control ==
 
-	activate Authn
 	Control -> Authn: SecureLayer @domain
+	activate Authn
 	Authn -> Control: RemoteID you@domain
 	deactivate Authn
 
-	activate Authz
 	Control -> Authz: WANT userid-create ON @domain AS you@domain
+	activate Authz
 	Authz -> Control: OK FOR admin@domain
 	deactivate Authz
 
 == Sanity Check ==
 
-	activate LDAP
 	Control -> LDAP: Compare user@domain AS admin@domain
+	activate LDAP
 	LDAP -[#blue]-> Control: UserID Found
 note left: <color:blue>Alternative flow, fatal error</color>
 Control -[#blue]-> User: Already Exists
@@ -43,17 +43,17 @@ deactivate User
 
 == Key Management ==
 
-	activate KeyManager
 	Control -> KeyManager: Have User user@domain
+	activate KeyManager
 	KeyManager -> Control: Queued
 deactivate Control
 	' Do not deactivate KeyManager
 
-			activate KDC
 			KeyManager -> KDC: Have Principal user@domain
+			activate KDC
 
+		KeyManager -> PKCS11: Have Layer user@domain AS admin@domain
 		activate PKCS11
-		KeyManager -> PKCS11: Have Layer user@domain FOR admin@domain
 
 			KDC -> KeyManager: OK
 			deactivate KDC
@@ -71,19 +71,23 @@ deactivate Control
 	activate KeyManager
 	deactivate KeyManager
 
-	activate LDAP
 	KeyManager -> LDAP: Have user@domain XS public AS admin@domain
+	activate LDAP
 	KeyManager -> LDAP: Have Creds for user@domain XS public AS admin@domain
 	KeyManager -> LDAP: Have pkcs11:xxx;y;zz XS user@domain AS admin@domain
 
-		activate DNS
 		KeyManager -[#blue]-> DNS: Have TLSA records AS admin@domain
+		activate DNS
 		note left: <color:blue>TLSA only for hosts</color>
 		DNS -[#blue]-> KeyManager: Queued
 		deactivate DNS
 
 	LDAP -> KeyManager: Ready
 	deactivate LDAP
+
+	KeyManager -> Authz: Cache hints
+	activate Authz
+	deactivate Authz
 
 	' Now we deactivate KeyManager
 	deactivate KeyManager
