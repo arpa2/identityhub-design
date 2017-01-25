@@ -1,0 +1,95 @@
+@startuml
+
+actor User
+participant Authn
+participant "IdHub Control" as Control
+participant "Key Manager" as KeyManager
+participant Authz
+database "PKCS #11" as PKCS11
+database KDC
+database LDAP
+database DNS
+
+autonumber
+
+User -> Control: Role Add role@domain
+activate User
+activate Control
+
+== Access Control ==
+
+	Control -> Authn: SecureLayer @domain
+	activate Authn
+	Authn -> Control: RemoteID you@domain
+	deactivate Authn
+
+	Control -> Authz: WANT roleid-create ON @domain AS you@domain
+	activate Authz
+	Authz -> Control: OK FOR admin@domain
+	deactivate Authz
+
+== Sanity Check ==
+
+	Control -> LDAP: Compare roleid@domain AS admin@domain
+	activate LDAP
+	LDAP -[#blue]-> Control: UserID Found
+note left: <color:blue>Alternative flow, fatal error</color>
+Control -[#blue]-> User: Already Exists
+	LDAP -> Control: UserID Not Found
+	deactivate LDAP
+
+Control -> User: Queued
+deactivate User
+
+== Key Management ==
+
+	Control -> KeyManager: Have Role role@domain
+	activate KeyManager
+	KeyManager -> Control: Queued
+deactivate Control
+	' Do not deactivate KeyManager
+
+			KeyManager -> KDC: Have Principal role@domain
+			activate KDC
+
+		KeyManager -> PKCS11: Have Layer role@domain AS admin@domain
+		activate PKCS11
+
+			KDC -> KeyManager: OK
+			deactivate KDC
+
+		KeyManager -> PKCS11: Have Keys role@domain
+
+		PKCS11 -> KeyManager: Made pkcs11:xxx;y;zz
+
+		KeyManager -> PKCS11: Retrieve role@domain
+		PKCS11 -> KeyManager: PubKey MIIEVzCCAz...
+
+		deactivate PKCS11
+
+	KeyManager -> KeyManager: PubKey MIIEVzCCAz... to Creds
+	activate KeyManager
+	deactivate KeyManager
+
+	KeyManager -> LDAP: Have role@domain XS public AS admin@domain
+	activate LDAP
+	KeyManager -> LDAP: Have Creds for role@domain XS public AS admin@domain
+	KeyManager -> LDAP: Have pkcs11:xxx;y;zz XS role@domain AS admin@domain
+
+		KeyManager -[#blue]-> DNS: Have TLSA records AS admin@domain
+		activate DNS
+		note left: <color:blue>TLSA only for hosts</color>
+		DNS -[#blue]-> KeyManager: Queued
+		deactivate DNS
+
+	LDAP -> KeyManager: Ready
+	deactivate LDAP
+
+	KeyManager -> Authz: Cache hints
+	activate Authz
+	deactivate Authz
+
+	' Now we deactivate KeyManager
+	deactivate KeyManager
+
+@enduml

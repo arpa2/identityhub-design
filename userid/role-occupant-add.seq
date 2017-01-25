@@ -1,0 +1,82 @@
+@startuml
+
+actor User
+participant Authn
+participant "IdHub Control" as Control
+participant "Key Manager" as KeyManager
+participant Authz
+' database "PKCS #11" as PKCS11
+' database KDC
+database LDAP
+' database DNS
+
+autonumber
+
+User -> Control: Role role@domain Grant user@domain1
+activate User
+activate Control
+
+== Access Control ==
+
+	Control -> Authn: SecureLayer @domain
+	activate Authn
+	Authn -> Control: RemoteID role+you@domain
+	deactivate Authn
+
+	Control -> Authz: WANT role-occupancy ON role@domain AS role+you@domain
+	activate Authz
+	Authz -> Control: OK FOR role+you@domain
+	deactivate Authz
+
+== Sanity Check ==
+
+	Control -> LDAP: Compare role@domain Occupant user@domain1 AS role+you@domain
+	activate LDAP
+	LDAP -[#blue]-> Control: UserID Found
+note left: <color:blue>Alternative flow, fatal error</color>
+Control -[#blue]-> User: Already Occupant
+	LDAP -> Control: UserID Not Found
+	deactivate LDAP
+
+Control -> User: Queued
+deactivate User
+
+== Key Management ==
+
+	Control -> KeyManager: Have role@domain Occupant user@domain1
+	activate KeyManager
+	KeyManager -> Control: Queued
+deactivate Control
+	' Do not deactivate KeyManager
+
+		' No key material will be handled
+
+	KeyManager -> LDAP: Retrieve role@domain
+	activate LDAP
+	note left: When copying the LDAP entry
+
+	LDAP -> KeyManager: Creds MIIEVzCCAz...
+	LDAP -> KeyManager: pkcs11:xxx;y;zz
+	deactivate LDAP
+
+	KeyManager -> KeyManager: Pick a role-internal OccupantID
+	activate KeyManager
+	deactivate KeyManager
+
+	KeyManager -> LDAP: Have role@domain Occupant user@domain1 AS role+you@domain
+	activate LDAP
+	KeyManager -> LDAP: Have Creds for user@domain1 AS role+you@domain
+	KeyManager -> LDAP: Have pkcs11:xxx;y;zz XS user@domain1 AS role+you@domain
+	note left: Or share the LDAP entry
+
+	LDAP -> KeyManager: Ready
+	deactivate LDAP
+
+	KeyManager -> Authz: Cache hints
+	activate Authz
+	deactivate Authz
+
+	' Now we deactivate KeyManager
+	deactivate KeyManager
+
+@enduml

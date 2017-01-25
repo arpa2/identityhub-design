@@ -1,0 +1,87 @@
+@startuml
+
+actor User
+participant Authn
+participant "IdHub Control" as Control
+participant "Key Manager" as KeyManager
+participant Authz
+database "PKCS #11" as PKCS11
+database KDC
+database LDAP
+database DNS
+
+autonumber
+
+User -> Control: Role Del group@domain
+activate User
+activate Control
+
+== Access Control ==
+
+	Control -> Authn: SecureLayer @domain
+	activate Authn
+	Authn -> Control: RemoteID you@domain
+	deactivate Authn
+
+	Control -> Authz: WANT roleid-delete ON role@domain AS you@domain
+	activate Authz
+	Authz -> Control: OK FOR admin@domain
+	deactivate Authz
+
+== Sanity Check ==
+
+	Control -> LDAP: Compare role@domain AS admin@domain
+	activate LDAP
+	LDAP -[#blue]-> Control: UserID Not Found
+note left: <color:blue>Alternative flow, fatal error</color>
+Control -[#blue]-> User: Not Found
+	LDAP -> Control: UserID Found
+	deactivate LDAP
+
+Control -> User: Queued
+deactivate User
+
+== Key Management ==
+
+	Control -> KeyManager: Drop Group group@domain
+	activate KeyManager
+	KeyManager -> Control: Queued
+deactivate Control
+	' Do not deactivate KeyManager
+
+			KeyManager -> KDC: Drop Principal role@domain
+			KeyManager -> KDC: Drop Principals role+...@domain
+			activate KDC
+
+		KeyManager -> PKCS11: Drop Layer role@domain AS admin@domain
+		activate PKCS11
+
+			KDC -> KeyManager: OK
+			deactivate KDC
+
+		deactivate PKCS11
+
+	KeyManager -> LDAP: Drop Creds for role@domain AS admin@domain
+	activate LDAP
+	KeyManager -> LDAP: Drop Creds for role+...@domain AS admin@domain
+	KeyManager -> LDAP: Drop pkcs11:xxx;y;zz AS admin@domain
+	KeyManager -> LDAP: Drop role@domain AS admin@domain
+	KeyManager -> LDAP: Drop role+...@domain AS admin@domain
+
+		KeyManager -[#blue]-> DNS: Drop TLSA records AS admin@domain
+		activate DNS
+		note left: <color:blue>TLSA only for hosts</color>
+		DNS -[#blue]-> KeyManager: Queued
+		deactivate DNS
+
+	LDAP -> KeyManager: Ready
+	deactivate LDAP
+
+	KeyManager -> Authz: Cache hints
+	activate Authz
+	deactivate Authz
+
+	' Now we deactivate KeyManager
+	deactivate KeyManager
+
+@enduml

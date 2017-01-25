@@ -1,0 +1,54 @@
+@startuml
+
+actor User
+participant Authn
+participant MTA
+participant Authz
+database "Mailbox" as Mbox
+
+autonumber
+
+User -> MTA: EHLO, STARTXXX
+activate User
+activate MTA
+
+== Access Control ==
+
+	MTA -> Authn: SecureLayer @domain
+	activate Authn
+	Authn -> MTA: UserID snd1@domain
+	note right: Clients authenticate for mail sending
+	deactivate Authn
+
+User -> MTA: MAIL FROM snd2@domain2
+
+	MTA -> Authz: BE snd2@domain2 AS snd1@domain
+	Authz -> MTA: OK
+
+User -> MTA: RCPT TO rcv1@domain
+
+	MTA -> Authz: WANT mail-send AS snd2@domain2
+	activate Authz
+	note left: SenderID cannot be a lie
+	Authz -> MTA: WELCOME
+
+User -> MTA: DATA / From: snd4@domain4
+
+	MTA -> Authz: COMM FROM snd4@domain4 TO rcv1@domain AS snd3@domain3
+	Authz -> MTA: WRITERS HAS snd5@domain5
+
+User -> MTA: DATA / To/Cc/Bcc: rcv2@domain
+
+	MTA -> MTA: Accept anything, even envelope-only addresses
+	activate MTA
+	deactivate MTA
+
+== Email Storage ==
+
+	MTA -> Mbox: LMTP store email
+	activate Mbox
+	Mbox -> MTA: Done
+	deactivate Mbox
+
+MTA -> User: Done
+
