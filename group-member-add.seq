@@ -1,0 +1,70 @@
+@startuml
+
+actor User
+participant Authn
+participant "IdHub Control" as Control
+participant "Key Manager" as KeyManager
+participant Authz
+' database "PKCS #11" as PKCS11
+' database KDC
+database LDAP
+' database DNS
+
+autonumber
+
+activate User
+activate Control
+User -> Control: Group group@domain Member Add user@domain1
+
+	activate Authn
+	Control -> Authn: SecureLayer @domain
+	Authn -> Control: RemoteID group+you@domain
+	deactivate Authn
+
+	activate Authz
+	Control -> Authz: WANT group-membership ON group@domain AS group+you@domain
+	Authz -> Control: OK FOR group+you@domain
+	deactivate Authz
+
+	activate LDAP
+	Control -> LDAP: Compare group@domain Member user@domain1 AS group+you@domain
+	LDAP -[#blue]-> Control: UserID Found
+note left: <color:blue>Alternative flow, fatal error</color>
+Control -[#blue]-> User: Already Member
+	LDAP -> Control: UserID Not Found
+	deactivate LDAP
+
+Control -> User: Queued
+deactivate User
+
+	activate KeyManager
+	Control -> KeyManager: Have group@domain Member user@domain1
+	KeyManager -> Control: Queued
+deactivate Control
+	' Do not deactivate KeyManager
+
+		' No key material will be handled
+
+	activate LDAP
+	KeyManager -> LDAP: Retrieve group@domain
+
+	LDAP -> KeyManager: Creds MIIEVzCCAz...
+	LDAP -> KeyManager: pkcs11:xxx;y;zz
+	deactivate LDAP
+
+	activate KeyManager
+	KeyManager -> KeyManager: Pick a group-internal MemberID
+	deactivate KeyManager
+
+	activate LDAP
+	KeyManager -> LDAP: Have group@domain Member user@domain1 AS group+you@domain
+	KeyManager -> LDAP: Have Creds for user@domain1 AS group+you@domain
+	KeyManager -> LDAP: Have pkcs11:xxx;y;zz XS user@domain1 AS group+you@domain
+
+	LDAP -> KeyManager: Ready
+	deactivate LDAP
+
+	' Now we deactivate KeyManager
+	deactivate KeyManager
+
+@enduml

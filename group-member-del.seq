@@ -1,0 +1,62 @@
+@startuml
+
+actor User
+participant Authn
+participant "IdHub Control" as Control
+participant "Key Manager" as KeyManager
+participant Authz
+' database "PKCS #11" as PKCS11
+' database KDC
+database LDAP
+' database DNS
+
+autonumber
+
+activate User
+activate Control
+User -> Control: Group group@domain Member Del user@domain1
+
+	activate Authn
+	Control -> Authn: SecureLayer @domain
+	Authn -> Control: RemoteID group+you@domain
+	deactivate Authn
+
+	activate Authz
+	Control -> Authz: WANT group-membership ON group@domain AS group+you@domain
+	Authz -> Control: OK FOR group+you@domain
+	deactivate Authz
+
+	activate LDAP
+	Control -> LDAP: Compare group@domain Member user@domain1 AS group+you@domain
+	LDAP -[#blue]-> Control: UserID Not Found
+note left: <color:blue>Alternative flow, fatal error</color>
+Control -[#blue]-> User: Unknown Member
+	LDAP -> Control: UserID Found
+	deactivate LDAP
+
+Control -> User: Queued
+deactivate User
+
+	activate KeyManager
+	Control -> KeyManager: Drop group@domain Member user@domain1
+	KeyManager -> Control: Queued
+deactivate Control
+	' Do not deactivate KeyManager
+
+		' No key material will be handled
+
+	activate LDAP
+	KeyManager -> LDAP: Drop group@domain Member user@domain1 AS group+you@domain
+
+		activate Authz
+		LDAP -> Authz: Drop certain cached privileges
+		Authz -> LDAP: Ready
+		deactivate Authz
+
+	LDAP -> KeyManager: Ready
+	deactivate LDAP
+
+	' Now we deactivate KeyManager
+	deactivate KeyManager
+
+@enduml

@@ -1,0 +1,85 @@
+@startuml
+
+actor User
+participant Authn
+participant "IdHub Control" as Control
+participant "Key Manager" as KeyManager
+participant Authz
+database "PKCS #11" as PKCS11
+database KDC
+database LDAP
+database DNS
+
+autonumber
+
+activate User
+activate Control
+User -> Control: Group Add group@domain
+
+	activate Authn
+	Control -> Authn: SecureLayer @domain
+	Authn -> Control: RemoteID you@domain
+	deactivate Authn
+
+	activate Authz
+	Control -> Authz: WANT groupid-create ON @domain AS you@domain
+	Authz -> Control: OK FOR admin@domain
+	deactivate Authz
+
+	activate LDAP
+	Control -> LDAP: Compare group@domain AS admin@domain
+	LDAP -[#blue]-> Control: UserID Found
+note left: <color:blue>Alternative flow, fatal error</color>
+Control -[#blue]-> User: Already Exists
+	LDAP -> Control: UserID Not Found
+	deactivate LDAP
+
+Control -> User: Queued
+deactivate User
+
+	activate KeyManager
+	Control -> KeyManager: Have Group group@domain
+	KeyManager -> Control: Queued
+deactivate Control
+	' Do not deactivate KeyManager
+
+			activate KDC
+			KeyManager -> KDC: Have Principal group@domain
+
+		activate PKCS11
+		KeyManager -> PKCS11: Have Layer group@domain FOR admin@domain
+
+			KDC -> KeyManager: OK
+			deactivate KDC
+
+		KeyManager -> PKCS11: Have Keys group@domain
+
+		PKCS11 -> KeyManager: Made pkcs11:xxx;y;zz
+
+		KeyManager -> PKCS11: Retrieve group@domain
+		PKCS11 -> KeyManager: PubKey MIIEVzCCAz...
+
+		deactivate PKCS11
+
+	KeyManager -> KeyManager: PubKey MIIEVzCCAz... to Creds
+	activate KeyManager
+	deactivate KeyManager
+
+	activate LDAP
+	KeyManager -> LDAP: Have group@domain XS public AS admin@domain
+	KeyManager -> LDAP: Have Creds for group@domain XS public AS admin@domain
+	KeyManager -> LDAP: Have pkcs11:xxx;y;zz XS group@domain AS admin@domain
+
+		activate DNS
+		KeyManager -[#blue]-> DNS: Have TLSA records AS admin@domain
+		note left: <color:blue>TLSA only for hosts</color>
+		DNS -[#blue]-> KeyManager: Queued
+		deactivate DNS
+
+	LDAP -> KeyManager: Ready
+	deactivate LDAP
+
+	' Now we deactivate KeyManager
+	deactivate KeyManager
+
+@enduml
