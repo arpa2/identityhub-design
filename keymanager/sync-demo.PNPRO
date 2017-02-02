@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!-- This project file has been saved by the New GreatSPN Editor, v.100 --><project name="Sync demo" version="121">
+  <gspn name="sync demo" show-color-cmd="false" show-fluid-cmd="false" show-timed-cmd="false" view-rates="false">
+    <nodes>
+      <place label-x="0.5" label-y="2.0" name="use A,B" x="4.0" y="7.0"/>
+      <place label-y="2.0" name="use A" x="14.0" y="7.0"/>
+      <place label-y="2.0" name="use B,C" x="9.0" y="19.0"/>
+      <transition name="T0" nservers-x="0.5" type="EXP" x="1.55" y="7.0"/>
+      <transition name="T1" nservers-x="0.5" type="EXP" x="17.55" y="7.0"/>
+      <transition label-y="2.5" name="T2" nservers-x="0.5" type="EXP" x="6.55" y="19.0"/>
+      <place label-x="3.5" label-y="0.5" name="claim A" x="9.0" y="1.0"/>
+      <place label-x="-3.5" label-y="0.5" name="claim B" x="6.0" y="13.0"/>
+      <transition name="T3" nservers-x="0.5" type="EXP" x="7.55" y="7.0"/>
+      <transition name="T4" nservers-x="0.5" type="EXP" x="11.55" y="7.0"/>
+      <transition label-y="2.5" name="T5" nservers-x="0.5" type="EXP" x="12.55" y="19.0"/>
+      <place label-x="3.0" label-y="0.0" name="claim C" x="16.0" y="13.0"/>
+    </nodes>
+    <edges>
+      <arc head="use A,B" kind="OUTPUT" tail="T0"/>
+      <arc head="T3" kind="INPUT" tail="use A,B"/>
+      <arc head="use B,C" kind="OUTPUT" tail="T2"/>
+      <arc head="T5" kind="INPUT" tail="use B,C"/>
+      <arc head="use A" kind="OUTPUT" tail="T4"/>
+      <arc head="T1" kind="INPUT" tail="use A"/>
+      <arc head="claim A" kind="OUTPUT" tail="T0"/>
+      <arc head="T3" kind="INPUT" tail="claim A"/>
+      <arc head="claim B" kind="OUTPUT" tail="T0"/>
+      <arc head="T3" kind="INPUT" tail="claim B"/>
+      <arc head="claim A" kind="OUTPUT" tail="T4"/>
+      <arc head="T1" kind="INPUT" tail="claim A"/>
+      <arc head="claim B" kind="OUTPUT" tail="T2"/>
+      <arc head="T5" kind="INPUT" tail="claim B"/>
+      <arc head="T4" kind="INHIBITOR" tail="claim A"/>
+      <arc head="T0" kind="INHIBITOR" tail="claim A"/>
+      <arc head="T0" kind="INHIBITOR" tail="claim B"/>
+      <arc head="T2" kind="INHIBITOR" tail="claim B"/>
+      <arc head="claim C" kind="OUTPUT" tail="T2"/>
+      <arc head="T5" kind="INPUT" tail="claim C"/>
+      <arc head="T2" kind="INHIBITOR" tail="claim C"/>
+    </edges>
+  </gspn>
+  <measures gspn-name="sync demo" name="Measures">
+    <assignments/>
+    <greatspn/>
+    <formulas>
+      <formula comment="Basic statistics of the toolchain execution." language="STAT"/>
+    </formulas>
+  </measures>
+</project>

@@ -1,0 +1,127 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!-- This project file has been saved by the New GreatSPN Editor, v.100 --><project name="IdentityHub" version="121">
+  <measures gspn-name="KeyMgr API" name="Measures">
+    <assignments/>
+    <greatspn/>
+    <formulas>
+      <formula comment="Basic statistics of the toolchain execution." language="STAT"/>
+    </formulas>
+  </measures>
+  <gspn name="KeyMgr API" show-fluid-cmd="false" show-timed-cmd="false" view-rates="false">
+    <nodes>
+      <place label-y="2.0" name="wanted" superposition-tags="wanted" x="10.0" y="11.0"/>
+      <place label-y="2.0" name="dropped" superposition-tags="dropped" x="28.0" y="11.0"/>
+      <transition label-y="-2.0" name="drop/1st" nservers-x="0.5" type="EXP" x="19.55" y="11.0"/>
+      <transition label-y="2.5" name="have/init" nservers-x="0.5" type="EXP" x="3.55" y="11.0"/>
+      <transition name="have/repeat" nservers-x="0.5" rotation="1.5707963267948966" type="EXP" x="10.55" y="5.0"/>
+      <transition label-y="2.0" name="drop/ignore" nservers-x="0.5" rotation="1.5707963267948966" type="EXP" x="19.55" y="17.0"/>
+      <transition label-y="-2.5" name="drop/repeat\\have/repeat" nservers-x="0.5" rotation="1.5707963267948966" type="EXP" x="28.55" y="5.0"/>
+      <text-box bold="true" border-color="#b6b6b6" fill-color="none" height="5.5" name="__textBox0" shadow="true" shape="ROUND_RECTANGLE" text-color="#000000" vert-pos="0" width="14.5" x="2.0" y="18.5">The $have$ and $drop$\\operations are idempotent\\but $have$ is not onger\\allowed  when $dropped$.</text-box>
+      <transition label-y="-2.0" name="nop/finish" nservers-x="0.5" type="EXP" x="37.55" y="11.0"/>
+      <place label-y="2.5" name="live" superposition-tags="live" x="37.0" y="17.0"/>
+    </nodes>
+    <edges>
+      <arc head="drop/1st" kind="INPUT" tail="wanted"/>
+      <arc head="dropped" kind="OUTPUT" tail="drop/1st"/>
+      <arc head="wanted" kind="OUTPUT" tail="have/init">
+        <point x="7.5" y="11.0"/>
+      </arc>
+      <arc head="have/init" kind="INHIBITOR" tail="wanted">
+        <point x="7.5" y="13.0"/>
+      </arc>
+      <arc head="have/repeat" kind="INPUT" tail="wanted">
+        <point x="10.0" y="9.0"/>
+      </arc>
+      <arc head="wanted" kind="OUTPUT" tail="have/repeat">
+        <point x="12.0" y="9.0"/>
+      </arc>
+      <arc head="drop/ignore" kind="INHIBITOR" tail="wanted"/>
+      <arc head="drop/ignore" kind="INHIBITOR" tail="dropped"/>
+      <arc head="drop/repeat\\have/repeat" kind="INPUT" tail="dropped">
+        <point x="28.0" y="8.5"/>
+      </arc>
+      <arc head="dropped" kind="OUTPUT" tail="drop/repeat\\have/repeat">
+        <point x="30.0" y="9.0"/>
+      </arc>
+      <arc head="nop/finish" kind="INPUT" tail="dropped"/>
+      <arc head="nop/finish" kind="INHIBITOR" tail="live"/>
+      <arc head="have/init" kind="INHIBITOR" tail="dropped">
+        <point x="25.5" y="8.5"/>
+        <point x="8.0" y="8.5"/>
+      </arc>
+    </edges>
+  </gspn>
+  <gspn name="KeyMgr Scheduler" show-fluid-cmd="false" show-timed-cmd="false" view-rates="false">
+    <nodes>
+      <place label-y="-2.0" marking="1" name="wanted" superposition-tags="wanted" x="4.0" y="11.0"/>
+      <place label-y="-2.0" name="live" superposition-tags="live" x="27.0" y="5.0"/>
+      <place label-y="-2.0" name="dropped" superposition-tags="dropped" x="51.0" y="11.0"/>
+      <transition height="6.0" label-y="-4.0" name="schedule.start" nservers-x="0.5" type="EXP" x="16.55" y="9.0"/>
+      <transition height="6.0" label-y="-4.0" name="schedule.start2stop.C" nservers-x="0.5" type="EXP" x="39.55" y="9.0"/>
+      <place label-x="1.0" label-y="2.0" name="start.req.C" x="26.0" y="19.0"/>
+      <place label-y="2.0" name="start.req.B" x="23.0" y="21.0"/>
+      <place label-y="2.5" name="start.req.A" x="19.0" y="22.0"/>
+      <transition height="6.0" label-y="-4.0" name="schedule.end" nservers-x="0.5" type="EXP" x="63.55" y="9.0"/>
+      <place label-x="-0.5" label-y="2.0" name="stop.req.C" x="45.0" y="19.0"/>
+      <place label-x="0.5" label-y="2.0" name="start.resp.C" x="32.0" y="19.0"/>
+      <place label-x="-1.0" label-y="2.0" name="stop.resp.C" x="51.0" y="19.0"/>
+      <place label-y="2.0" name="stop.resp.B" x="54.0" y="21.0"/>
+      <place label-y="2.0" name="stop.resp.A" x="59.0" y="22.0"/>
+      <text-box bold="true" border-color="#b6b6b6" fill-color="none" height="5.5" name="__textBox0" shadow="true" shape="ROUND_RECTANGLE" text-color="#000000" vert-pos="0" width="21.5" x="27.25" y="26.0">Scheduler starts subprocesses; shown are\\A, B, C.  Intermediate sync to go from\\start to stop; shown is C.  Finally, collect\\all subprocesses; shown are A, B, C.</text-box>
+    </nodes>
+    <edges>
+      <arc head="schedule.start" kind="INPUT" tail="wanted">
+        <point x="11.0" y="10.5"/>
+      </arc>
+      <arc head="live" kind="OUTPUT" tail="schedule.start">
+        <point x="22.0" y="12.0"/>
+      </arc>
+      <arc head="schedule.start" kind="INHIBITOR" tail="live">
+        <point x="23.0" y="6.0"/>
+      </arc>
+      <arc head="start.req.C" kind="OUTPUT" tail="schedule.start">
+        <point x="24.0" y="16.0"/>
+      </arc>
+      <arc head="start.req.B" kind="OUTPUT" tail="schedule.start">
+        <point x="22.5" y="17.0"/>
+      </arc>
+      <arc head="start.req.A" kind="OUTPUT" tail="schedule.start">
+        <point x="20.0" y="17.5"/>
+      </arc>
+      <arc head="schedule.start2stop.C" kind="INPUT" tail="start.resp.C">
+        <point x="36.0" y="14.0"/>
+      </arc>
+      <arc head="dropped" kind="OUTPUT" tail="schedule.start2stop.C">
+        <point x="46.0" y="13.0"/>
+      </arc>
+      <arc head="stop.req.C" kind="OUTPUT" tail="schedule.start2stop.C">
+        <point x="44.0" y="14.0"/>
+      </arc>
+      <arc head="schedule.end" kind="INPUT" tail="stop.resp.A">
+        <point x="60.5" y="17.5"/>
+      </arc>
+      <arc head="schedule.end" kind="INPUT" tail="stop.resp.B">
+        <point x="57.5" y="17.0"/>
+      </arc>
+      <arc head="schedule.end" kind="INPUT" tail="stop.resp.C">
+        <point x="54.0" y="16.0"/>
+      </arc>
+      <arc head="schedule.start2stop.C" kind="INPUT" tail="dropped">
+        <point x="46.0" y="10.5"/>
+      </arc>
+      <arc head="schedule.end" kind="INPUT" tail="live">
+        <point x="32.0" y="6.0"/>
+        <point x="57.0" y="6.0"/>
+      </arc>
+      <arc head="schedule.end" kind="INPUT" tail="dropped">
+        <point x="58.0" y="10.5"/>
+      </arc>
+      <arc head="dropped" kind="OUTPUT" tail="schedule.end">
+        <point x="58.0" y="13.0"/>
+      </arc>
+      <arc head="wanted" kind="OUTPUT" tail="schedule.start">
+        <point x="11.0" y="13.0"/>
+      </arc>
+    </edges>
+  </gspn>
+</project>
